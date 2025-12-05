@@ -62,7 +62,8 @@ exports.login = async (request, response) => {
             return response.status(401).json({ message: 'Invalid password' });
         }
 
-        await db.query('UPDATE users SET login_count = login_count + 1, last_login = NOW() WHERE id = ?', 
+        await db.query(
+            'UPDATE users SET login_count = login_count + 1, last_login = NOW() WHERE id = ?', 
             [user.id]
         );
 
@@ -98,7 +99,8 @@ exports.login = async (request, response) => {
 
 exports.me = async (request, response) => {
     try {
-        const [users] = await db.query('SELECT id, name, email, login_count, last_login FROM users WHERE id = ?',
+        const [users] = await db.query(
+            'SELECT id, name, email, login_count, last_login, role FROM users WHERE id = ?',
             [request.user.id]
         );
 

@@ -19,7 +19,9 @@ exports.getUserMetrics = async (request, response) => {
 exports.getAdminMetrics = async (request, response) => {
     try {
         const [rows] = await db.query(
-            'SELECT COUNT(*) AS total_users, login_count, last_login FROM users');
+            'SELECT (SELECT COUNT(*) FROM users) AS total_users, last_login, login_count FROM users WHERE id = ?', 
+            [request.user.id]
+        );
         response.json(rows[0]);
     } catch (error) {
         return response.status(500).json({ message: 'Internal server error' });
