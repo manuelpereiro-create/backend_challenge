@@ -3,10 +3,23 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.register = async (request, response) => {
-    const { name, email, password } = request.body;
+    const { name, email, password, confirmPassword } = request.body;
 
-    if (!email || !password || !name) {
-        return response.status(400).json({ message: 'Name, email and password are required' });
+    if (!email || !password || !name || !confirmPassword) {
+        return response.status(400).json({ message: 'All fields are required' });
+    }
+
+    if (password !== confirmPassword) {
+        return response.status(400).json({ message: 'Passwords do not match' });
+    }
+
+    if (password.length < 8) {
+        return response.status(400).json({ message: 'Password must be at least 8 characters long' });
+    }
+
+    const hasNumber = /\d/;
+    if (!hasNumber.test(password)) {
+        return response.status(400).json({ message: 'Password must contain at least one number' });
     }
 
     try{
@@ -20,6 +33,7 @@ exports.register = async (request, response) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        // Insert new user into the database (do not store confirmPassword)
         await db.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', 
             [name, email, hashedPassword]
         );
@@ -27,6 +41,7 @@ exports.register = async (request, response) => {
         response.status(201).json({ message: 'User registered successfully' });
 
     } catch (error) {
+        console.error('Error during registration:', error);
         return response.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -75,6 +90,7 @@ exports.login = async (request, response) => {
         });
         
     } catch (error) {
+        console.error('Error during login:', error);
         return response.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -88,7 +104,7 @@ exports.me = async (request, response) => {
         if (users.length === 0) {
             return response.status(404).json({ message: 'User not found' });
         }
-        
+
         response.json(users[0]);
 
     } catch (error) {

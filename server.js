@@ -1,20 +1,27 @@
 const express = require('express');
-const mysql2 = require('mysql2/promise');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-const db = require('./models/db');
-const User = require('./models/User');
+const db = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/metrics', require('./routes/metricsRoutes'));
+
+/*
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+*/
 
 // Probar conexión a MySQL
 app.get('/api/test-db', async (req, res) => {
