@@ -1,0 +1,97 @@
+const db = require('../config/db');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+exports.register = async (request, response) => {
+    const { name, email, password } = request.body;
+
+    if (!email || !password || !name) {
+        return response.status(400).json({ message: 'Name, email and password are required' });
+    }
+
+    try{
+        // Check if user already exists
+        const [existingUser] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+        if (existingUser.length > 0) {
+            return response.status(409).json({ message: 'Email already exists' });
+        }
+
+        // Hash the password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        await db.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', 
+            [name, email, hashedPassword]
+        );
+
+        response.status(201).json({ message: 'User registered successfully' });
+
+    } catch (error) {
+        return response.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.login = async (request, response) => {
+    const { email, password } = request.body;
+
+    try {
+        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (users.length === 0) {
+            return response.status(401).json({ message: 'Invalid email' });
+        }
+
+        const user = users[0];
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        
+        if (!isValidPassword) {
+            return response.status(401).json({ message: 'Invalid password' });
+        }
+
+        await db.query('UPDATE users SET login_count = login_count + 1, last_login = NOW() WHERE id = ?', 
+            [user.id]
+        );
+
+        // Generate JWT
+        const token = jwt.sign(
+            { 
+                id: user.id, 
+                email: user.email, 
+                name: user.name 
+            },
+                process.env.JWT_SECRET,
+            { 
+                expiresIn: process.env.JWT_EXPIRES_IN 
+            }
+        );
+
+        // Return token
+        response.json({
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email
+            }
+        });
+        
+    } catch (error) {
+        return response.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.me = async (request, response) => {
+    try {
+        const [users] = await db.query('SELECT id, name, email, login_count, last_login FROM users WHERE id = ?',
+            [request.user.id]
+        );
+
+        if (users.length === 0) {
+            return response.status(404).json({ message: 'User not found' });
+        }
+        
+        response.json(users[0]);
+
+    } catch (error) {
+        return response.status(500).json({ message: 'Internal server error' });
+    }
+};
