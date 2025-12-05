@@ -15,50 +15,11 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/metrics', require('./routes/metricsRoutes'));
 
-/*
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-
-*/
-
-// Probar conexión a MySQL
-app.get('/api/test-db', async (req, res) => {
-  try {
-    const connection = await db.getConnection();
-    await connection.ping();
-    connection.release();
-    res.json({ 
-      success: true, 
-      message: 'Conexión a MySQL exitosa',
-      database: process.env.DB_NAME 
-    });
-  } catch (error) {
-    console.error('Error de conexión a MySQL:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error al conectar a MySQL', 
-      error: error.message 
-    });
-  }
-});
-
-// Endpoint de bienvenida
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'API Backend Challenge',
-    endpoints: {
-      testDB: '/api/test-db'
-    }
-  });
-});
-
-// Iniciar el servidor
 app.listen(PORT, async () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
   
-  // Verificar conexión a la base de datos al iniciar
+  // Verify database connection
   try {
     const connection = await db.getConnection();
     await connection.ping();
