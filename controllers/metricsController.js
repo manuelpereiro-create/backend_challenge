@@ -19,7 +19,13 @@ exports.getUserMetrics = async (request, response) => {
 exports.getAdminMetrics = async (request, response) => {
     try {
         const [rows] = await db.query(
-            'SELECT (SELECT COUNT(*) FROM users) AS total_users, last_login, login_count FROM users WHERE id = ?', 
+            `SELECT  
+                last_login, 
+                login_count,
+                (SELECT COUNT(*) FROM users) AS total_users, 
+                (SELECT SUM(login_count) FROM users) AS total_system_logins 
+            FROM users 
+            WHERE id = ?`, 
             [request.user.id]
         );
         response.json(rows[0]);
