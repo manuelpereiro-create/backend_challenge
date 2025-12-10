@@ -7,11 +7,13 @@ exports.getUserMetrics = async (request, response) => {
             'SELECT login_count, last_login FROM users WHERE id = ?', [userId]);
         
         if (rows.length > 0) {
+            console.log('User Metrics Data:', rows[0]);
             response.json(rows[0]);
         } else {
             response.status(404).json({ message: 'Metrics could not found' });
         }
     } catch (error) {
+        console.error('Error en User Metrics:', error);
         return response.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -28,8 +30,10 @@ exports.getAdminMetrics = async (request, response) => {
             WHERE id = ?`, 
             [request.user.id]
         );
+        console.log('Admin Metrics Data:', rows[0]);
         response.json(rows[0]);
     } catch (error) {
+        console.error('Error en Admin Metrics:', error);
         return response.status(500).json({ message: 'Internal server error' });
     }
 };

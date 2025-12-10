@@ -14,6 +14,7 @@ app.use(express.json());
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/metrics', require('./routes/metricsRoutes'));
+app.use('/api/health', require('./routes/healthRoutes'));
 
 
 app.listen(PORT, async () => {

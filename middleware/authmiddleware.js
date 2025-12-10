@@ -5,6 +5,7 @@ module.exports = (request, response, next) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
+        console.warn('Access denied: There is no token provided');
         return response.status(401).json({ message: 'Unauthorized: No token provided' });
     }
 
@@ -14,6 +15,7 @@ module.exports = (request, response, next) => {
         next();
 
     } catch (error) {
+        console.error('Invalid or expired token:', error.message);
         return response.status(403).json({ message: 'Forbidden: Invalid token' });
     }
 };

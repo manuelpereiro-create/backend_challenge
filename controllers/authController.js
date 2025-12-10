@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 
 exports.register = async (request, response) => {
     const { name, email, password, confirmPassword } = request.body;
+    console.log(`Register attempt for: ${email}`);
 
     if (!email || !password || !name || !confirmPassword) {
         return response.status(400).json({ message: 'All fields are required' });
@@ -38,6 +39,7 @@ exports.register = async (request, response) => {
             [name, email, hashedPassword]
         );
 
+        console.log(`User registered successfully: ${email}`);
         response.status(201).json({ message: 'User registered successfully' });
 
     } catch (error) {
@@ -48,10 +50,12 @@ exports.register = async (request, response) => {
 
 exports.login = async (request, response) => {
     const { email, password } = request.body;
+    console.log(`Login attempt for: ${email}`);
 
     try {
         const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (users.length === 0) {
+            console.warn(`Login fallido: User not found (${email})`);
             return response.status(401).json({ message: 'Invalid email' });
         }
 
@@ -59,6 +63,7 @@ exports.login = async (request, response) => {
         const isValidPassword = await bcrypt.compare(password, user.password);
         
         if (!isValidPassword) {
+            console.warn(`Login fail: Password incorrect (${email})`);
             return response.status(401).json({ message: 'Invalid password' });
         }
 
@@ -66,6 +71,8 @@ exports.login = async (request, response) => {
             'UPDATE users SET login_count = login_count + 1, last_login = NOW() WHERE id = ?', 
             [user.id]
         );
+
+        console.log(`Successful login: ${email} (Role: ${user.role})`);
 
         // Generate JWT
         const token = jwt.sign(
